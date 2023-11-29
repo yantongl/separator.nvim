@@ -6,6 +6,7 @@
 * [x] use neovim extmark to show a separator
 * get buf file structure from Treesitter
 * show all separators
+* autocmd refresh on BufRead, BufEnter, BufWritePost
 * allow config colors and style
   * color: foreground color only
   * style: line, dash, dot
