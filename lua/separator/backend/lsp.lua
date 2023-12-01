@@ -1,15 +1,20 @@
 local M = {}
 
-function prettyprint(x)
-    local text = vim.inspect(x)
-    text = vim.split(text, '\n', {})
-    print(text)
-    -- vim.api.nvim_buf_set_lines(248, 0, 100, false, text)
+local function convert_type(lsp_type)
+    local type = "unknown"
+    if vim.startswith(lsp_type, "Function") then
+        type = 'func'
+    elseif vim.startswith(lsp_type, "Class") then
+        type = 'class'
+    end
+    return type
 end
 
-function M.get_function_list(callback)
+function M.get_function_list(callback, config)
     function on_list(symbles)
-        prettyprint(symbles)
+        if config.debug then
+            print(vim.inspect(symbles))
+        end
         -- re-org symbles by types
         local symblesByType = {}
         for _, item in ipairs(symbles.items) do
@@ -18,10 +23,15 @@ function M.get_function_list(callback)
             end
             table.insert(symblesByType[item.kind], item)
         end
+
         local func_list = {}
         for _, item in ipairs(symblesByType.Function) do
             local func_name = string.sub(item.text, #"[Function] ")
-            table.insert(func_list, { item.lnum - 2, func_name })
+            table.insert(func_list, {
+                type = convert_type(item.kind),
+                row = item.lnum,
+                func_name = func_name
+            })
         end
         callback(func_list)
     end

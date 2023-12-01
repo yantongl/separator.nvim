@@ -18,6 +18,15 @@
     * embeded classes and enum
     * functions
 
+
+### dev logger buffer
+
+* check if there is a buffer named as "PluginLogger"
+  * if not, create a new buffer and name it
+* always output to the buffer
+
+  install https://github.com/AndrewRadev/bufferize.vim
+
 ## Inspired by
 
 * [VSCode Separater](https://marketplace.visualstudio.com/items?itemName=alefragnani.separators)

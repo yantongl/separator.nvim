@@ -304,13 +304,17 @@ end
 
 --- Find a list of functions, return the list or pass it to callback
 --- @callback User function to handle the list of functions
-function M.get_function_list(callback)
+function M.get_function_list(callback, config)
     local func_list = {}
     local result = M.get_current_functions_formatted()
     for _, value in ipairs(result) do
         value = vim.trim(value)
         local tokens = vim.split(value, ":\t")
-        table.insert(func_list, tokens)
+        table.insert(func_list, {
+            type = "func",
+            row = tokens[1],
+            func_name = tokens[2]
+        })
     end
     if callback ~= nil then
         callback(func_list)
