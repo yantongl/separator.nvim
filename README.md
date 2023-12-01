@@ -4,13 +4,15 @@
 ## TODO
 
 * [x] use neovim extmark to show a separator
-* get buf file structure from Treesitter
-* show all separators
-* autocmd refresh on BufRead, BufEnter, BufWritePost
+* [x] get buf file structure from Treesitter
+* [ ] get buf file structure from LSP
+* [x] show all separators
+* [x] autocmd refresh on BufRead, BufEnter, BufWritePost
 * allow config colors and style
-  * color: foreground color only
-  * style: line, dash, dot
-  * length: short for functions, long for classes
+  * [x] color: foreground color only
+  * [x] style: solid line, dash, dot, double
+  * [x] length: short for functions, long for classes
+  * different types
     * namespace
     * class, struct, enum
     * embeded classes and enum
