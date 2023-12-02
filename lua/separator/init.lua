@@ -1,7 +1,9 @@
+local logger = require('separator.utils.logging')
+
 local backend = nil
 
-local default_class_style = { fgColor = '#56d364', char = '=', width = 80, name = 'ClassSeparator' }
-local default_func_style = { fgColor = '#f97583', char = '_', width = 60, name = 'FuncSeparator' }
+local default_class_style = { fgColor = '#56d364', char = '=', width = 100, name = 'ClassSeparator' }
+local default_func_style = { fgColor = '#f97583', char = '_', width = 100, name = 'FuncSeparator' }
 
 local M = {
     BUFFER = 0, -- 0 means current buffer
@@ -10,9 +12,10 @@ local M = {
         styles = {
             class = default_class_style,
             func = default_func_style,
+            method = default_func_style,
         },
-        backend = 'treesitter', -- backend name, treesitter or lsp
-        -- backend = 'lsp', -- backend name, treesitter or lsp
+        -- backend = 'treesitter', -- backend name, treesitter or lsp
+        backend = 'lsp', -- backend name, treesitter or lsp
         debug = false
     },
 }
@@ -23,14 +26,12 @@ function M.draw_separator(row, style)
     -- get the length of the line, then fill the line to configured column
     local bufnr = vim.api.nvim_get_current_buf()
     local line = vim.api.nvim_buf_get_lines(bufnr, row - 1, row, false)[1]
-    local line_length = 0
-    if (line ~= nil) then line_length = #line end
-    -- if line ~= nil then line_length = #line end
+    local line_length = line and string.len(line) or 0
     local txt = string.rep(style.char, style.width - 1 - line_length)
 
     -- set a extmark
     if M.config.debug then
-        print('extmark on lin ' .. tostring(row) .. ' with text ' .. line)
+        logger.log('extmark on lin ' .. tostring(row) .. ' with text ' .. line)
     end
     local mark_id = vim.api.nvim_buf_set_extmark(M.BUFFER, M.mark_ns, row - 1, 0, {
         virt_text = {
@@ -42,6 +43,7 @@ end
 function M.refresh()
     -- clear all namespaced objects (extmarks)
     vim.api.nvim_buf_clear_namespace(0, M.mark_ns, 0, -1)
+    logger.clear()
 
     -- draw on each function
     backend.get_function_list(function(result)
@@ -49,6 +51,7 @@ function M.refresh()
             local row = item.row
             -- local function_name = item.func_name
             local style = M.config.styles[item.type]
+            logger.log('draw separator at line ' .. tostring(row))
             M.draw_separator(tonumber(row), style)
         end
     end, M.config)
@@ -80,6 +83,11 @@ function M.setup(opts)
             command = 'lua require("separator").refresh()'
         }
     )
+
+    vim.cmd [[
+    nmap <leader>vt :lua require('separator').setup({backend='treesitter', debug=true})
+    nmap <leader>vl :lua require('separator').setup({backend='lsp', debug=true})
+    ]]
 end
 
 return M

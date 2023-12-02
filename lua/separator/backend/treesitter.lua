@@ -1,3 +1,5 @@
+local logger = require('separator.utils.logging')
+
 ---@alias node unknown
 local ts_utils = require('nvim-treesitter.ts_utils')
 local parsers = require("nvim-treesitter.parsers")
@@ -234,38 +236,20 @@ local function get_function_list_of_parent(parent)
     return content
 end
 
----Get biggest line number to align numbers evenly in rows
----@param info NodeInformation[]
----@return number
-local function get_max_line_number_length(info)
-    local max_line_number_length = 0
-    for _, node_information in ipairs(info) do
-        -- diagnostic is incorrect - probably version mismatch
-        ---@diagnostic disable-next-line: param-type-mismatch
-        local current_line_number_length = string.len(node_information.line_number)
-
-        if current_line_number_length >= max_line_number_length then
-            max_line_number_length = current_line_number_length
-        end
-    end
-
-    return max_line_number_length
-end
-
 ---Global endpoint to get all functions of the current buffer
 ---structured into a table of multiple table informations
 ---@return NodeInformation[]
 function M.get_current_functions()
     local root = get_root()
     if root == nil then
-        print("No Tressitter-parser found in the current buffer")
+        logger.log("No Tressitter-parser found in the current buffer")
         return {}
     end
 
     local ok, content = pcall(get_function_list_of_parent, root)
     if not ok then
-        print("Something went wrong in the current buffer")
-        print("Current buffer might have unsuported language or syntax")
+        logger.log("Something went wrong in the current buffer")
+        logger.log("Current buffer might have unsuported language or syntax")
         return {}
     end
 
@@ -277,43 +261,16 @@ function M.get_current_functions()
     return content
 end
 
----Global endpoint to get all functions of the current buffer
----structured into a table of formatted strings for easy usage of a selector
----@alias FormattedInformation string[]
----@return FormattedInformation # example {"line_number:\t function", "123:\t foo", ...}
-function M.get_current_functions_formatted()
-    ---@type FormattedInformation
-    local res = {}
-    local output = M.get_current_functions()
-
-    local max_line_number_length = get_max_line_number_length(output)
-    -- add 1 because we will add a ":" at the end of the number
-    local line_number_formatting_string = "% " .. (max_line_number_length + 1) .. "d"
-
-    -- every entry will be concatted into a string
-    -- result: {"line_number:\t function", "123:\t foo", ...}
-    for _, node_information in ipairs(output) do
-        local space_aligned_line_number = string.format(line_number_formatting_string, node_information.line_number)
-        local concatted_string = space_aligned_line_number .. ":\t" .. node_information.function_name
-
-        table.insert(res, concatted_string)
-    end
-
-    return res
-end
-
 --- Find a list of functions, return the list or pass it to callback
 --- @callback User function to handle the list of functions
 function M.get_function_list(callback, config)
     local func_list = {}
-    local result = M.get_current_functions_formatted()
-    for _, value in ipairs(result) do
-        value = vim.trim(value)
-        local tokens = vim.split(value, ":\t")
+    local result = M.get_current_functions()
+    for _, node_info in ipairs(result) do
         table.insert(func_list, {
             type = "func",
-            row = tokens[1],
-            func_name = tokens[2]
+            row = node_info.line_number,
+            func_name = node_info.function_name
         })
     end
     if callback ~= nil then
